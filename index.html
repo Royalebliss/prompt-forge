@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PromptForge — AI Prompt Engineering Platform</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --purple: #A855F7;
+    --purple-dim: #7C3AED;
+    --purple-glow: rgba(168,85,247,0.35);
+    --gold: #FACC15;
+    --gold-dim: #CA8A04;
+    --gold-glow: rgba(250,204,21,0.25);
+    --bg-void: #050507;
+    --bg-deep: #0A0A0F;
+    --bg-card: rgba(14,14,22,0.85);
+    --bg-glass: rgba(255,255,255,0.03);
+    --border-dim: rgba(168,85,247,0.15);
+    --border-bright: rgba(168,85,247,0.45);
+    --text-primary: #F0EEFF;
+    --text-secondary: rgba(240,238,255,0.55);
+    --text-muted: rgba(240,238,255,0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── BACKGROUND EFFECTS ─── */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(168,85,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(168,85,247,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  .bg-orb-1 {
+    position: fixed; width: 600px; height: 600px;
+    border-radius: 50%; z-index: 0;
+    background: radial-gradient(circle, rgba(168,85,247,0.12) 0%, transparent 70%);
+    top: -200px; left: -150px;
+    animation: drift1 18s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  .bg-orb-2 {
+    position: fixed; width: 500px; height: 500px;
+    border-radius: 50%; z-index: 0;
+    background: radial-gradient(circle, rgba(250,204,21,0.07) 0%, transparent 70%);
+    bottom: -150px; right: -100px;
+    animation: drift2 22s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  .bg-orb-3 {
+    position: fixed; width: 350px; height: 350px;
+    border-radius: 50%; z-index: 0;
+    background: radial-gradient(circle, rgba(168,85,247,0.08) 0%, transparent 70%);
+    top: 50%; right: 20%;
+    animation: drift3 26s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  @keyframes drift1 { from { transform: translate(0,0) scale(1); } to { transform: translate(60px,80px) scale(1.15); } }
+  @keyframes drift2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-50px,-60px) scale(1.1); } }
+  @keyframes drift3 { from { transform: translate(0,0); } to { transform: translate(40px,-70px); } }
+
+  /* ─── LAYOUT ─── */
+  .app-wrapper {
+    position: relative; z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    padding: 32px 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-dim);
+    margin-bottom: 40px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .logo-group { display: flex; align-items: center; gap: 14px; }
+
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--purple), var(--purple-dim));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 24px var(--purple-glow), inset 0 1px 0 rgba(255,255,255,0.1);
+    flex-shrink: 0;
+  }
+  .logo-icon svg { width: 22px; height: 22px; }
+
+  .logo-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    background: linear-gradient(90deg, var(--text-primary), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .logo-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gold);
+    border: 1px solid var(--gold-dim);
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.15em;
+    opacity: 0.85;
+    margin-top: 4px;
+  }
+
+  .api-key-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 16px;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-dim);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.03em;
+  }
+  .api-key-btn:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+    box-shadow: 0 0 14px var(--purple-glow);
+  }
+  .api-key-btn .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #ef4444;
+    transition: background 0.3s;
+  }
+  .api-key-btn.connected .dot { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.6); }
+
+  /* ─── SUGGESTION PILLS ─── */
+  .suggestions-section { margin-bottom: 28px; }
+  .suggestions-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .suggestions-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .suggestion-pill {
+    padding: 8px 16px;
+    background: rgba(168,85,247,0.07);
+    border: 1px solid rgba(168,85,247,0.2);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-family: 'Syne', sans-serif;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+  }
+  .suggestion-pill:hover {
+    background: rgba(168,85,247,0.18);
+    border-color: var(--purple);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--purple-glow);
+  }
+  .suggestion-pill .pill-icon { margin-right: 6px; }
+
+  /* ─── MAIN CARD ─── */
+  .forge-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    overflow: hidden;
+    box-shadow: 0 0 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  .card-top-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-dim);
+    background: rgba(0,0,0,0.2);
+  }
+  .bar-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .bar-dot.red { background: #ff5f57; }
+  .bar-dot.yellow { background: #febc2e; }
+  .bar-dot.green { background: #28c840; }
+  .bar-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-left: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .card-body { padding: 28px; }
+
+  /* ─── INPUT AREA ─── */
+  .input-label {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .label-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: var(--purple);
+    text-transform: uppercase;
+  }
+  .char-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  textarea {
+    width: 100%;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--border-dim);
+    border-radius: 10px;
+    padding: 16px 18px;
+    color: var(--text-primary);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    resize: vertical;
+    min-height: 130px;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    outline: none;
+  }
+  textarea::placeholder { color: var(--text-muted); }
+  textarea:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px var(--purple-glow), 0 0 30px rgba(168,85,247,0.1);
+  }
+
+  /* ─── ACTION BUTTONS ROW ─── */
+  .actions-row {
+    display: flex; gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .btn:hover::after { opacity: 1; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--purple), var(--purple-dim));
+    color: #fff;
+    box-shadow: 0 4px 20px var(--purple-glow);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--purple-glow);
+  }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    background: rgba(250,204,21,0.08);
+    border-color: rgba(250,204,21,0.25);
+    color: var(--gold);
+  }
+  .btn-secondary:hover {
+    background: rgba(250,204,21,0.15);
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--gold-glow);
+  }
+
+  .btn-ghost {
+    background: var(--bg-glass);
+    border-color: var(--border-dim);
+    color: var(--text-secondary);
+  }
+  .btn-ghost:hover {
+    border-color: var(--border-bright);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+  }
+
+  .btn:disabled {
+    opacity: 0.4; cursor: not-allowed; transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .btn-icon { width: 17px; height: 17px; flex-shrink: 0; }
+
+  /* ─── SPINNER ─── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    display: flex; align-items: center; gap: 14px;
+    margin: 28px 0 0;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .divider.visible { opacity: 1; }
+  .divider-line { flex: 1; height: 1px; background: var(--border-dim); }
+  .divider-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ─── OUTPUT AREA ─── */
+  .output-panel {
+    margin-top: 20px;
+    display: none;
+    animation: fadeSlideUp 0.4s ease both;
+  }
+  .output-panel.visible { display: block; }
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .output-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .output-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  .output-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  /* ─── TAGS ─── */
+  .tags-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    border: 1px solid;
+    transition: all 0.2s;
+  }
+  .tag-purple { color: var(--purple); border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.08); }
+  .tag-gold { color: var(--gold); border-color: rgba(250,204,21,0.3); background: rgba(250,204,21,0.07); }
+  .tag-teal { color: #2dd4bf; border-color: rgba(45,212,191,0.3); background: rgba(45,212,191,0.07); }
+  .tag-pink { color: #f472b6; border-color: rgba(244,114,182,0.3); background: rgba(244,114,182,0.07); }
+
+  /* ─── OUTPUT TEXT ─── */
+  .output-text {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(168,85,247,0.2);
+    border-radius: 10px;
+    padding: 20px 22px;
+    color: var(--text-primary);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.93rem;
+    line-height: 1.75;
+    position: relative;
+    overflow: hidden;
+  }
+  .output-text::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--purple), var(--gold));
+    border-radius: 3px 0 0 3px;
+  }
+
+  /* ─── RTC BREAKDOWN ─── */
+  .rtc-panel {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 600px) { .rtc-panel { grid-template-columns: 1fr; } }
+
+  .rtc-card {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-dim);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .rtc-card:hover {
+    border-color: var(--border-bright);
+    box-shadow: 0 0 18px var(--purple-glow);
+  }
+  .rtc-letter {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .rtc-letter.r { color: var(--purple); }
+  .rtc-letter.t { color: var(--gold); }
+  .rtc-letter.c { color: #2dd4bf; }
+  .rtc-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .rtc-content {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ─── COPY BUTTON ─── */
+  .copy-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px;
+    background: rgba(168,85,247,0.1);
+    border: 1px solid rgba(168,85,247,0.25);
+    border-radius: 7px;
+    color: var(--purple);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .copy-btn:hover {
+    background: rgba(168,85,247,0.2);
+    border-color: var(--purple);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px var(--purple-glow);
+  }
+  .copy-btn.copied {
+    background: rgba(34,197,94,0.1);
+    border-color: rgba(34,197,94,0.4);
+    color: #22c55e;
+    box-shadow: 0 0 14px rgba(34,197,94,0.2);
+  }
+
+  /* ─── TOAST ─── */
+  #toast {
+    position: fixed; bottom: 30px; right: 24px; z-index: 9999;
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 20px;
+    background: rgba(14,14,22,0.95);
+    border: 1px solid rgba(34,197,94,0.4);
+    border-radius: 10px;
+    color: #22c55e;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(34,197,94,0.1);
+    backdrop-filter: blur(12px);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ─── API KEY MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--bg-deep);
+    border: 1px solid var(--border-bright);
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 0 60px rgba(168,85,247,0.2);
+    transform: scale(0.95);
+    transition: transform 0.25s;
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+
+  .modal-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .modal-sub {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .modal-sub a { color: var(--purple); text-decoration: none; }
+  .modal-sub a:hover { text-decoration: underline; }
+
+  .modal-input {
+    width: 100%;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border-dim);
+    border-radius: 8px;
+    padding: 13px 16px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 16px;
+  }
+  .modal-input:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px var(--purple-glow);
+  }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* ─── LOADING STATE ─── */
+  .loading-shimmer {
+    background: linear-gradient(90deg,
+      rgba(168,85,247,0.05) 0%,
+      rgba(168,85,247,0.12) 50%,
+      rgba(168,85,247,0.05) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+    height: 16px;
+    margin-bottom: 10px;
+  }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* ─── FOOTER NOTE ─── */
+  .footer-note {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-dim);
+  }
+  .footer-note span { color: var(--purple); }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.25); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.45); }
+
+  /* ─── SCAN LINE EFFECT ─── */
+  .scan-line {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 2;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--purple), transparent);
+    opacity: 0.4;
+    animation: scan 6s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes scan {
+    from { top: 0; opacity: 0.4; }
+    80% { opacity: 0.4; }
+    to { top: 100vh; opacity: 0; }
+  }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 640px) {
+    header { padding: 20px 0 18px; margin-bottom: 28px; }
+    .logo-text { font-size: 1.15rem; }
+    .card-body { padding: 20px 16px; }
+    .actions-row { gap: 8px; }
+    .btn { padding: 10px 16px; font-size: 0.82rem; }
+    .output-text { font-size: 0.88rem; padding: 16px; }
+  }
+
+  /* ─── PULSE RING ─── */
+  @keyframes pulseRing {
+    0% { box-shadow: 0 0 0 0 var(--purple-glow); }
+    70% { box-shadow: 0 0 0 12px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+  .btn-primary:not(:disabled):hover { animation: pulseRing 1.2s ease infinite; }
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-grid"></div>
+<div class="bg-orb-1"></div>
+<div class="bg-orb-2"></div>
+<div class="bg-orb-3"></div>
+<div class="scan-line"></div>
+
+<!-- Toast -->
+<div id="toast">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  Copied to clipboard
+</div>
+
+<!-- API Key Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Configure API Key</div>
+    <p class="modal-sub">
+      Enter your <a href="https://openrouter.ai/keys" target="_blank">OpenRouter API key</a> to enable PromptForge. Your key is stored locally in your browser and never sent to any server.
+    </p>
+    <input
+      type="password"
+      class="modal-input"
+      id="apiKeyInput"
+      placeholder="sk-or-v1-••••••••••••••••••••••••••••••••"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modalCancel" style="padding:9px 18px;font-size:0.82rem;">Cancel</button>
+      <button class="btn btn-primary" id="modalSave" style="padding:9px 18px;font-size:0.82rem;">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        Save Key
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app-wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="logo-group">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">PromptForge</div>
+        <div class="logo-badge">R-T-C ENGINE v2.0</div>
+      </div>
+    </div>
+    <button class="api-key-btn" id="apiKeyBtn">
+      <span class="dot" id="keyDot"></span>
+      <span id="keyLabel">Set API Key</span>
+    </button>
+  </header>
+
+  <!-- Suggestions -->
+  <div class="suggestions-section">
+    <div class="suggestions-label">⚡ Quick-start prompts</div>
+    <div class="suggestions-row" id="suggestionsRow">
+      <button class="suggestion-pill" data-prompt="Write a Python script that scrapes product prices from an e-commerce website and exports results to a CSV file">
+        <span class="pill-icon">💻</span>Web scraper in Python
+      </button>
+      <button class="suggestion-pill" data-prompt="Explain the concept of quantum entanglement to a curious high school student with no prior physics background">
+        <span class="pill-icon">🔬</span>Explain quantum entanglement
+      </button>
+      <button class="suggestion-pill" data-prompt="Write an opening chapter for a cyberpunk noir story set in a rain-soaked megalopolis where AI has replaced the judicial system">
+        <span class="pill-icon">✍️</span>Cyberpunk story opening
+      </button>
+    </div>
+  </div>
+
+  <!-- Forge Card -->
+  <div class="forge-card">
+    <!-- Top bar -->
+    <div class="card-top-bar">
+      <div class="bar-dot red"></div>
+      <div class="bar-dot yellow"></div>
+      <div class="bar-dot green"></div>
+      <div class="bar-title">prompt_forge.exe — active session</div>
+    </div>
+
+    <!-- Body -->
+    <div class="card-body">
+
+      <!-- Input -->
+      <div class="input-label">
+        <span class="label-text">// Input Prompt</span>
+        <span class="char-count" id="charCount">0 chars</span>
+      </div>
+      <textarea
+        id="promptInput"
+        placeholder="Enter your raw prompt here — PromptForge will rewrite it using the Role-Task-Constraint framework, making it clearer, more specific, and more effective…"
+        rows="5"
+      ></textarea>
+
+      <!-- Actions -->
+      <div class="actions-row">
+        <button class="btn btn-primary" id="rewriteBtn">
+          <svg class="btn-icon" id="rewriteIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <div class="spinner" id="rewriteSpinner"></div>
+          <span id="rewriteLabel">Forge Prompt</span>
+        </button>
+        <button class="btn btn-secondary" id="refineBtn" disabled>
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+          <span>Refine</span>
+        </button>
+        <button class="btn btn-ghost" id="clearBtn">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          <span>Clear</span>
+        </button>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider" id="divider">
+        <div class="divider-line"></div>
+        <div class="divider-label">Forged Output</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- Output -->
+      <div class="output-panel" id="outputPanel">
+
+        <div class="output-header">
+          <div class="output-left">
+            <span class="output-label">// Optimized Prompt</span>
+            <div class="tags-row" id="tagsRow"></div>
+          </div>
+          <button class="copy-btn" id="copyBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+
+        <div class="output-text" id="outputText"></div>
+
+        <!-- RTC Breakdown -->
+        <div class="rtc-panel" id="rtcPanel">
+          <div class="rtc-card">
+            <div class="rtc-letter r">R</div>
+            <div class="rtc-name">Role</div>
+            <div class="rtc-content" id="rtcRole">—</div>
+          </div>
+          <div class="rtc-card">
+            <div class="rtc-letter t">T</div>
+            <div class="rtc-name">Task</div>
+            <div class="rtc-content" id="rtcTask">—</div>
+          </div>
+          <div class="rtc-card">
+            <div class="rtc-letter c">C</div>
+            <div class="rtc-name">Constraint</div>
+            <div class="rtc-content" id="rtcConstraint">—</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Powered by <span>OpenRouter</span> · R-T-C Framework · Built with PromptForge Engine
+  </div>
+
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+let apiKey = localStorage.getItem('pf_openrouter_key') || '';
+let currentOutput = '';
+let isLoading = false;
+
+// ─── ELEMENTS ────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const promptInput  = $('promptInput');
+const charCount    = $('charCount');
+const rewriteBtn   = $('rewriteBtn');
+const rewriteLabel = $('rewriteLabel');
+const rewriteIcon  = $('rewriteIcon');
+const rewriteSpinner = $('rewriteSpinner');
+const refineBtn    = $('refineBtn');
+const clearBtn     = $('clearBtn');
+const outputPanel  = $('outputPanel');
+const outputText   = $('outputText');
+const tagsRow      = $('tagsRow');
+const copyBtn      = $('copyBtn');
+const divider      = $('divider');
+const rtcRole      = $('rtcRole');
+const rtcTask      = $('rtcTask');
+const rtcConstraint= $('rtcConstraint');
+const apiKeyBtn    = $('apiKeyBtn');
+const keyDot       = $('keyDot');
+const keyLabel     = $('keyLabel');
+const modalOverlay = $('modalOverlay');
+const apiKeyInput  = $('apiKeyInput');
+const modalSave    = $('modalSave');
+const modalCancel  = $('modalCancel');
+const toast        = $('toast');
+
+// ─── API KEY UI ───────────────────────────────────────────
+function updateKeyUI() {
+  if (apiKey) {
+    apiKeyBtn.classList.add('connected');
+    keyLabel.textContent = 'Key Connected';
+  } else {
+    apiKeyBtn.classList.remove('connected');
+    keyLabel.textContent = 'Set API Key';
+  }
+}
+updateKeyUI();
+
+apiKeyBtn.onclick = () => {
+  apiKeyInput.value = apiKey;
+  modalOverlay.classList.add('open');
+  setTimeout(() => apiKeyInput.focus(), 150);
+};
+modalCancel.onclick = () => modalOverlay.classList.remove('open');
+modalOverlay.onclick = e => { if (e.target === modalOverlay) modalOverlay.classList.remove('open'); };
+modalSave.onclick = () => {
+  const val = apiKeyInput.value.trim();
+  if (!val) return;
+  apiKey = val;
+  localStorage.setItem('pf_openrouter_key', val);
+  updateKeyUI();
+  modalOverlay.classList.remove('open');
+  showToast('API key saved ✓');
+};
+apiKeyInput.addEventListener('keydown', e => { if (e.key === 'Enter') modalSave.click(); });
+
+// ─── CHAR COUNT ───────────────────────────────────────────
+promptInput.addEventListener('input', () => {
+  charCount.textContent = `${promptInput.value.length} chars`;
+});
+
+// ─── SUGGESTION PILLS ─────────────────────────────────────
+document.querySelectorAll('.suggestion-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    promptInput.value = pill.dataset.prompt;
+    charCount.textContent = `${promptInput.value.length} chars`;
+    promptInput.focus();
+  });
+});
+
+// ─── TOAST ────────────────────────────────────────────────
+function showToast(msg = 'Copied to clipboard') {
+  toast.querySelector('span') && (toast.querySelector('span') ? null : null);
+  // Update text content after the icon
+  const textNode = [...toast.childNodes].find(n => n.nodeType === 3);
+  if (textNode) textNode.textContent = ' ' + msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ─── COPY ─────────────────────────────────────────────────
+copyBtn.addEventListener('click', () => {
+  if (!currentOutput) return;
+  navigator.clipboard.writeText(currentOutput).then(() => {
+    copyBtn.classList.add('copied');
+    copyBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    showToast('Copied to clipboard');
+    setTimeout(() => {
+      copyBtn.classList.remove('copied');
+      copyBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+    }, 2500);
+  });
+});
+
+// ─── CLEAR ────────────────────────────────────────────────
+clearBtn.addEventListener('click', () => {
+  promptInput.value = '';
+  charCount.textContent = '0 chars';
+  outputPanel.classList.remove('visible');
+  divider.classList.remove('visible');
+  outputPanel.style.display = 'none';
+  refineBtn.disabled = true;
+  currentOutput = '';
+  tagsRow.innerHTML = '';
+  rtcRole.textContent = '—';
+  rtcTask.textContent = '—';
+  rtcConstraint.textContent = '—';
+});
+
+// ─── SET LOADING STATE ────────────────────────────────────
+function setLoading(state) {
+  isLoading = state;
+  rewriteBtn.disabled = state;
+  refineBtn.disabled = state;
+  if (state) {
+    rewriteIcon.style.display = 'none';
+    rewriteSpinner.style.display = 'block';
+    rewriteLabel.textContent = 'Forging…';
+  } else {
+    rewriteIcon.style.display = '';
+    rewriteSpinner.style.display = 'none';
+    rewriteLabel.textContent = 'Forge Prompt';
+  }
+}
+
+// ─── RENDER TAGS ─────────────────────────────────────────
+const TAG_STYLES = {
+  Academic:  'tag-purple',
+  Code:      'tag-teal',
+  Creative:  'tag-gold',
+  Business:  'tag-pink',
+  Research:  'tag-purple',
+  Technical: 'tag-teal',
+  Marketing: 'tag-gold',
+  Medical:   'tag-pink',
+  Science:   'tag-teal',
+  Writing:   'tag-gold',
+};
+
+function renderTags(tags) {
+  tagsRow.innerHTML = '';
+  tags.forEach(t => {
+    const span = document.createElement('span');
+    const cls = TAG_STYLES[t] || 'tag-purple';
+    span.className = `tag ${cls}`;
+    span.textContent = '#' + t;
+    tagsRow.appendChild(span);
+  });
+}
+
+// ─── CALL OPENROUTER ──────────────────────────────────────
+async function callOpenRouter(messages, systemPrompt) {
+  if (!apiKey) {
+    modalOverlay.classList.add('open');
+    setTimeout(() => apiKeyInput.focus(), 150);
+    throw new Error('No API key');
+  }
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': window.location.href,
+      'X-Title': 'PromptForge',
+    },
+    body: JSON.stringify({
+      model: 'openai/gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages,
+      ],
+      temperature: 0.72,
+      max_tokens: 1200,
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `API error ${res.status}`);
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+// ─── FORGE (REWRITE) ──────────────────────────────────────
+rewriteBtn.addEventListener('click', async () => {
+  const raw = promptInput.value.trim();
+  if (!raw) { promptInput.focus(); return; }
+  if (isLoading) return;
+
+  setLoading(true);
+
+  // Show loading shimmer
+  divider.classList.add('visible');
+  outputPanel.style.display = 'block';
+  outputPanel.classList.add('visible');
+  outputText.innerHTML = `
+    <div class="loading-shimmer" style="width:90%"></div>
+    <div class="loading-shimmer" style="width:75%"></div>
+    <div class="loading-shimmer" style="width:85%"></div>
+    <div class="loading-shimmer" style="width:60%"></div>
+  `;
+  tagsRow.innerHTML = '';
+  rtcRole.textContent = '…';
+  rtcTask.textContent = '…';
+  rtcConstraint.textContent = '…';
+
+  const SYSTEM = `You are PromptForge, an elite AI prompt engineering system. Your job is to rewrite raw prompts using the R-T-C (Role, Task, Constraint) framework to make them maximally effective.
+
+Respond ONLY with a valid JSON object in this exact structure (no markdown fences, no preamble):
+{
+  "optimizedPrompt": "<the fully rewritten, detailed, high-quality prompt>",
+  "role": "<the role assigned to the AI in the prompt, 1-2 sentences>",
+  "task": "<the specific task defined, 1-2 sentences>",
+  "constraint": "<the constraints and requirements, 1-2 sentences>",
+  "tags": ["<tag1>","<tag2>","<tag3>"]
+}
+
+Tags must be chosen from: Academic, Code, Creative, Business, Research, Technical, Marketing, Medical, Science, Writing. Choose 1-3 that best fit.
+The optimizedPrompt must be at least 3× more detailed than the input, written in clear, precise, directive language.`;
+
+  try {
+    const raw_response = await callOpenRouter(
+      [{ role: 'user', content: `Rewrite this prompt using the R-T-C framework:\n\n"${raw}"` }],
+      SYSTEM
+    );
+
+    let parsed;
+    try {
+      const cleaned = raw_response.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      // Fallback: use raw as output
+      parsed = {
+        optimizedPrompt: raw_response,
+        role: 'Specialized AI assistant',
+        task: 'Complete the described objective',
+        constraint: 'Be accurate, concise, and helpful',
+        tags: ['Technical'],
+      };
+    }
+
+    currentOutput = parsed.optimizedPrompt;
+    outputText.textContent = parsed.optimizedPrompt;
+    rtcRole.textContent = parsed.role || '—';
+    rtcTask.textContent = parsed.task || '—';
+    rtcConstraint.textContent = parsed.constraint || '—';
+    renderTags(parsed.tags || []);
+    refineBtn.disabled = false;
+
+  } catch (err) {
+    if (err.message !== 'No API key') {
+      outputText.innerHTML = `<span style="color:#f87171">⚠ Error: ${err.message}</span>`;
+    } else {
+      outputPanel.style.display = 'none';
+      divider.classList.remove('visible');
+    }
+  } finally {
+    setLoading(false);
+  }
+});
+
+// ─── REFINE ───────────────────────────────────────────────
+refineBtn.addEventListener('click', async () => {
+  if (!currentOutput || isLoading) return;
+  setLoading(true);
+
+  outputText.innerHTML = `
+    <div class="loading-shimmer" style="width:88%"></div>
+    <div class="loading-shimmer" style="width:70%"></div>
+    <div class="loading-shimmer" style="width:82%"></div>
+    <div class="loading-shimmer" style="width:55%"></div>
+    <div class="loading-shimmer" style="width:78%"></div>
+  `;
+
+  const REFINE_SYSTEM = `You are PromptForge's Refinement Engine. Take an already-improved prompt and make it even better:
+- Add more specificity and context
+- Sharpen the language and eliminate vagueness
+- Add output format instructions if missing
+- Ensure the prompt elicits the highest quality AI response possible
+
+Return ONLY the refined prompt text with no preamble, no JSON, no markdown.`;
+
+  try {
+    const refined = await callOpenRouter(
+      [{ role: 'user', content: `Refine and enhance this prompt further:\n\n"${currentOutput}"` }],
+      REFINE_SYSTEM
+    );
+    currentOutput = refined.trim();
+    outputText.textContent = currentOutput;
+  } catch (err) {
+    outputText.textContent = currentOutput; // restore
+    if (err.message !== 'No API key') showToast('Refinement failed: ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+});
+</script>
+</body>
+</html>
