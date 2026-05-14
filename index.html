@@ -989,7 +989,7 @@ async function callOpenRouter(messages, systemPrompt) {
       'X-Title': 'PromptForge',
     },
     body: JSON.stringify({
-      model:model: 'google/gemini-2.0-flash-lite-001', ,
+      model:model: 'openrouter/free',
       messages: [
         { role: 'system', content: systemPrompt },
         ...messages,
